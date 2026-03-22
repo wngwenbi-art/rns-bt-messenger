@@ -1,20 +1,22 @@
-package com.example.rnsbtmessenger
+﻿package com.example.rnsbtmessenger
+
+import java.io.ByteArrayOutputStream
 
 /**
  * KISS Framing for RNode communication over Bluetooth Classic (SPP)
  * Reference: https://en.wikipedia.org/wiki/KISS_(amateur_radio_protocol)
  * 
  * Wire Format:
- * ┌─────────────────────────────────────┐
- * │ 0xC0                    │ FEND      │ 1 byte
- * │ <KISS Type + Port>      │ 0x00      │ 1 byte (Data frame, port 0)
- * │ <RNS Packet Bytes>      │ payload   │ N bytes (≤500 MTU)
- * │ 0xC0                    │ FEND      │ 1 byte
- * └─────────────────────────────────────┘
+ * â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+ * â”‚ 0xC0                    â”‚ FEND      â”‚ 1 byte
+ * â”‚ <KISS Type + Port>      â”‚ 0x00      â”‚ 1 byte (Data frame, port 0)
+ * â”‚ <RNS Packet Bytes>      â”‚ payload   â”‚ N bytes (â‰¤500 MTU)
+ * â”‚ 0xC0                    â”‚ FEND      â”‚ 1 byte
+ * â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
  * 
  * Byte Escaping:
- * 0xC0 → 0xDB 0xDC
- * 0xDB → 0xDB 0xDD
+ * 0xC0 â†’ 0xDB 0xDC
+ * 0xDB â†’ 0xDB 0xDD
  */
 class KissFramer {
     

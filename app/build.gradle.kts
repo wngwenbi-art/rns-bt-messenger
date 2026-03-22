@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
@@ -43,7 +43,7 @@ android {
 }
 
 dependencies {
-    // implementation("com.github.torlando-tech:reticulum-kt:0.9.0") // TEMP: Check JitPack for available version
+    // implementation("com.github.torlando-tech:reticulum-kt:main-SNAPSHOT") // TEMP: Check JitPack for available version
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
