@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RNS BT Messenger</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="send">Send</string>
+    <string name="rnode_mac_hint">F4:12:73:29:4E:89</string>
+    <string name="message_hint">Enter text message</string>
+    <string name="send_text">Send Text</string>
+    <string name="send_image">Send Image</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="connecting">Connecting...</string>
+</resources>
