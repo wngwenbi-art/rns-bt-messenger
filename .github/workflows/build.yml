@@ -1,3 +1,4 @@
+# .github/workflows/build.yml
 name: Android Build & Test
 
 on:
@@ -30,13 +31,12 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       
-      # ✅ Gradle Action provides Gradle directly - no wrapper needed!
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
       
-      # ✅ Use 'gradle' command directly, NOT './gradlew'
+      # ✅ Build Debug APK (no signing required)
       - name: Build Debug APK
         run: gradle assembleDebug --stacktrace --no-daemon
       

@@ -1,25 +1,71 @@
+plugins {
+    id("com.android.application")
+    id("com.android.library") version "8.2.0" apply false	
+    id("org.jetbrains.kotlin.android")
+}
+
 android {
-    // ... existing config ...
-    
-    signingConfigs {
-        create("release") {
-            // Use environment variables from GitHub Secrets
-            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "keystore/release.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
-        }
+    namespace = "com.example.rnsbtmessenger"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.rnsbtmessenger"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
-    
+
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildFeatures {
+        viewBinding = true
+    }
+}
+
+dependencies {
+    // Reticulum Kotlin Core
+    implementation("com.github.torlando-tech:reticulum-kt:0.9.0")
+    
+    // AndroidX
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    
+    // Image loading
+    implementation("io.coil-kt:coil:2.5.0")
+    
+    // BouncyCastle for crypto
+    implementation("org.bouncycastle:bcprov-jdk18on:1.77")
+    
+    // Testing
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
