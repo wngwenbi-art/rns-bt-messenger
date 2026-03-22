@@ -4,11 +4,11 @@ import java.io.ByteArrayOutputStream
 
 class KissFramer {
     companion object {
-        const val FEND: Byte = 0xC0
-        const val FESC: Byte = 0xDB
-        const val TFEND: Byte = 0xDC
-        const val TFESC: Byte = 0xDD
-        const val KISS_DATA_FRAME: Byte = 0x00
+        const val FEND: Byte = 0xC0.toByte()
+        const val FESC: Byte = 0xDB.toByte()
+        const val TFEND: Byte = 0xDC.toByte()
+        const val TFESC: Byte = 0xDD.toByte()
+        const val KISS_DATA_FRAME: Byte = 0x00.toByte()
     }
     
     fun encode(packetBytes: ByteArray): ByteArray {
