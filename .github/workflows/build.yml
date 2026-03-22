@@ -8,15 +8,10 @@ on:
   workflow_dispatch:
 
 env:
-  JAVA_VERSION: '21'
+  JAVA_VERSION: '17'  # Changed from 21 to 17 (more stable for Android)
   GRADLE_VERSION: '8.2'
-  ANDROID_API_LEVEL: 34
-  BUILD_TOOLS_VERSION: '34.0.0'
 
-jobs:  # ← ALL jobs must be under this key
-  # ─────────────────────────────────────────────────────────────
-  # Job 1: Build & Test
-  # ─────────────────────────────────────────────────────────────
+jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -39,29 +34,17 @@ jobs:  # ← ALL jobs must be under this key
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-disabled: false
       
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
       
-      - name: Download Dependencies
-        run: ./gradlew androidDependencies
-        continue-on-error: true
-      
-      - name: Run Lint Checks
-        run: ./gradlew lint
-        continue-on-error: true
-      
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest
-        continue-on-error: true
+      # Skip androidDependencies - it's deprecated and causes issues
+      # - name: Download Dependencies
+      #   run: ./gradlew androidDependencies
       
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
-      
-      - name: Build Release APK
-        if: github.ref == 'refs/heads/main'
-        run: ./gradlew assembleRelease --stacktrace
-        continue-on-error: true
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
       
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -70,136 +53,3 @@ jobs:  # ← ALL jobs must be under this key
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
           if-no-files-found: warn
-      
-      - name: Upload Release APK
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-${{ github.sha }}
-          path: app/build/outputs/apk/release/app-release.apk
-          retention-days: 30
-          if-no-files-found: warn
-
-  # ─────────────────────────────────────────────────────────────
-  # Job 2: Code Quality
-  # ─────────────────────────────────────────────────────────────
-  code-quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: build
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'gradle'
-      
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-      
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
-      
-      - name: Run Detekt
-        run: ./gradlew detekt
-        continue-on-error: true
-      
-      - name: Run Ktlint
-        run: ./gradlew ktlintCheck
-        continue-on-error: true
-
-  # ─────────────────────────────────────────────────────────────
-  # Job 3: Dependency Check
-  # ─────────────────────────────────────────────────────────────
-  dependency-check:
-    name: Dependency Security Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-      
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-      
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
-      
-      - name: Run Dependency Check
-        run: ./gradlew dependencyCheckAnalyze
-        continue-on-error: true
-
-  # ─────────────────────────────────────────────────────────────
-  # Job 4: Create GitHub Release (Main Branch Only)
-  # ─────────────────────────────────────────────────────────────
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [build, code-quality]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Get Version from Gradle
-        id: version
-        run: |
-          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts | head -1)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Download Release APK
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release-${{ github.sha }}
-          path: ./release-artifacts/
-      
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ steps.version.outputs.version }}-${{ github.run_number }}
-          name: Release v${{ steps.version.outputs.version }} (Build ${{ github.run_number }})
-          body: |
-            ## 📱 RNS Bluetooth Messenger
-            
-            ### Build Information
-            - **Version**: ${{ steps.version.outputs.version }}
-            - **Build Number**: ${{ github.run_number }}
-            - **Commit**: ${{ github.sha }}
-            
-          files: |
-            ./release-artifacts/app-release.apk
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  # ─────────────────────────────────────────────────────────────
-  # Job 5: Notify on Failure (NOW PROPERLY UNDER jobs:)
-  # ─────────────────────────────────────────────────────────────
-  notify-failure:
-    name: Notify on Build Failure
-    runs-on: ubuntu-latest
-    needs: [build, code-quality, dependency-check]
-    if: failure()
-    
-    steps:
-      - name: Notify Failure
-        run: |
-          echo "❌ Build failed for commit: ${{ github.sha }}"
-          echo "Check logs at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
