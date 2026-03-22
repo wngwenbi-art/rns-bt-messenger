@@ -1,4 +1,7 @@
 package com.example.rnsbtmessenger
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import android.widget.AdapterView
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -20,6 +23,8 @@ import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+private lateinit var deviceSpinner: Spinner
+private val pairedDevices = mutableListOf<BluetoothDevice>()
     private var rnsService: RnsService? = null
     private var serviceBound = false
     private var rnodeMacAddress: String = ""
@@ -47,9 +52,57 @@ class MainActivity : AppCompatActivity() {
         setupUI(); checkPermissions()
     }
     
-    private fun setupUI() {
-        binding.rnodeMacInput.setText("F4:12:73:29:4E:89")
-        binding.connectButton.setOnClickListener { rnodeMacAddress = binding.rnodeMacInput.text.toString().trim(); if (rnodeMacAddress.isNotEmpty()) checkPermissions() else Toast.makeText(this, "Enter RNode MAC", Toast.LENGTH_SHORT).show() }
+    private fun loadPairedDevices() {
+    pairedDevices.clear()
+    val adapter = BluetoothAdapter.getDefaultAdapter()
+    if (adapter == null) {
+        Toast.makeText(this, "Bluetooth not available", Toast.LENGTH_SHORT).show()
+        return
+    }
+    if (!adapter.isEnabled) {
+        Toast.makeText(this, "Enable Bluetooth first", Toast.LENGTH_SHORT).show()
+        return
+    }
+    
+    val bonded = adapter.bondedDevices
+    if (bonded != null && bonded.isNotEmpty()) {
+        pairedDevices.addAll(bonded)
+        val deviceNames = bonded.map { "${it.name ?: "Unknown"} (${it.address})" }.toTypedArray()
+        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, deviceNames)
+        deviceSpinner.adapter = spinnerAdapter
+    } else {
+        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayOf("No paired devices"))
+        deviceSpinner.adapter = spinnerAdapter
+        Toast.makeText(this, "No paired devices found", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun setupUI() {
+    deviceSpinner = binding.deviceSpinner
+    binding.refreshDevicesButton.setOnClickListener { loadPairedDevices() }
+    
+    // Load devices on start
+    loadPairedDevices()
+    
+    binding.connectButton.setOnClickListener {
+        val selectedDevice = pairedDevices.getOrNull(deviceSpinner.selectedItemPosition)
+        if (selectedDevice != null) {
+            rnodeMacAddress = selectedDevice.address
+            checkPermissions()
+        } else {
+            Toast.makeText(this, "Select a device first", Toast.LENGTH_SHORT).show()
+        }
+    }
+    binding.sendTextButton.setOnClickListener { 
+        val msg = binding.messageInput.text.toString()
+        if (msg.isNotEmpty() && serviceBound) { 
+            rnsService?.sendTextMessage(ByteArray(16), msg)
+            binding.messageInput.text.clear()
+            Toast.makeText(this, "Sent", Toast.LENGTH_SHORT).show() 
+        } 
+    }
+    binding.sendImageButton.setOnClickListener { imagePicker.launch("image/*") }
+}
         binding.sendTextButton.setOnClickListener { val msg = binding.messageInput.text.toString(); if (msg.isNotEmpty() && serviceBound) { rnsService?.sendTextMessage(ByteArray(16), msg); binding.messageInput.text.clear(); Toast.makeText(this, "Sent", Toast.LENGTH_SHORT).show() } }
         binding.sendImageButton.setOnClickListener { imagePicker.launch("image/*") }
     }
