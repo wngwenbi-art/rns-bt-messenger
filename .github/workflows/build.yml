@@ -1,0 +1,282 @@
+name: Android Build & Test
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  JAVA_VERSION: '21'
+  GRADLE_VERSION: '8.2'
+  ANDROID_API_LEVEL: 34
+  BUILD_TOOLS_VERSION: '34.0.0'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: Build & Test
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      # ─── Checkout Repository ─────────────────────────────────
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for versioning
+      
+      # ─── Setup Java JDK ──────────────────────────────────────
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      # ─── Setup Gradle ────────────────────────────────────────
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-disabled: false
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      
+      # ─── Grant Execute Permission to Gradlew ─────────────────
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+      
+      # ─── Download Dependencies ───────────────────────────────
+      - name: Download Dependencies
+        run: ./gradlew androidDependencies
+        continue-on-error: true
+      
+      # ─── Run Lint Checks ─────────────────────────────────────
+      - name: Run Lint Checks
+        run: ./gradlew lint
+        continue-on-error: true
+      
+      # ─── Run Unit Tests ──────────────────────────────────────
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest
+        continue-on-error: true
+      
+      # ─── Build Debug APK ─────────────────────────────────────
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+      
+      # ─── Build Release APK (if signing configured) ───────────
+      - name: Build Release APK
+        if: github.ref == 'refs/heads/main'
+        run: ./gradlew assembleRelease --stacktrace
+        continue-on-error: true
+        env:
+          # Signing configuration (use GitHub Secrets)
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      
+      # ─── Upload Debug APK Artifact ───────────────────────────
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: warn
+      
+      # ─── Upload Release APK Artifact ─────────────────────────
+      - name: Upload Release APK
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ github.sha }}
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+          if-no-files-found: warn
+      
+      # ─── Upload Build Reports ────────────────────────────────
+      - name: Upload Build Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports-${{ github.sha }}
+          path: |
+            app/build/reports/
+            app/build/outputs/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: Code Quality & Static Analysis
+  # ─────────────────────────────────────────────────────────────
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+      
+      # ─── Run Detekt (Kotlin Static Analysis) ─────────────────
+      - name: Run Detekt
+        run: ./gradlew detekt
+        continue-on-error: true
+      
+      # ─── Run Ktlint ──────────────────────────────────────────
+      - name: Run Ktlint
+        run: ./gradlew ktlintCheck
+        continue-on-error: true
+      
+      # ─── Upload Code Quality Reports ─────────────────────────
+      - name: Upload Code Quality Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-reports-${{ github.sha }}
+          path: |
+            build/reports/
+            app/build/reports/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 3: Dependency Check (Security)
+  # ─────────────────────────────────────────────────────────────
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+      
+      # ─── Run Dependency Check ────────────────────────────────
+      - name: Run Dependency Check
+        run: ./gradlew dependencyCheckAnalyze
+        continue-on-error: true
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      
+      # ─── Upload Dependency Report ────────────────────────────
+      - name: Upload Dependency Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report-${{ github.sha }}
+          path: build/reports/dependency-check/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 4: Create GitHub Release (Main Branch Only)
+  # ─────────────────────────────────────────────────────────────
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build, code-quality]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get Version from Gradle
+        id: version
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts | head -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Build version: $VERSION"
+      
+      - name: Download Release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-${{ github.sha }}
+          path: ./release-artifacts/
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}-${{ github.run_number }}
+          name: Release v${{ steps.version.outputs.version }} (Build ${{ github.run_number }})
+          body: |
+            ## 📱 RNS Bluetooth Messenger
+            
+            ### Build Information
+            - **Version**: ${{ steps.version.outputs.version }}
+            - **Build Number**: ${{ github.run_number }}
+            - **Commit**: ${{ github.sha }}
+            - **Date**: ${{ github.event.head_commit.timestamp }}
+            
+            ### Changes
+            ${{ github.event.head_commit.message }}
+            
+            ### Installation
+            1. Download `app-release.apk` from Assets
+            2. Install on Android device (enable "Unknown Sources")
+            3. Pair RNode via Bluetooth settings
+            4. Launch app and connect
+            
+            ### ⚠️ Notes
+            - This is an automated build
+            - Requires Android 8.0+ (API 26)
+            - Bluetooth Classic support required
+            
+          files: |
+            ./release-artifacts/app-release.apk
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+# ─────────────────────────────────────────────────────────────
+# Job 5: Notify on Failure
+# ─────────────────────────────────────────────────────────────
+notify-failure:
+  name: Notify on Build Failure
+  runs-on: ubuntu-latest
+  needs: [build, code-quality, dependency-check]
+  if: failure()
+  
+  steps:
+    - name: Notify Failure
+      run: |
+        echo "❌ Build failed for commit: ${{ github.sha }}"
+        echo "Check logs at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        # Add webhook notifications here (Discord, Slack, etc.)
+        # curl -X POST -H 'Content-type: application/json' \
+        #   --data '{"text":"Build failed: ${{ github.repository }}"}' \
+        #   ${{ secrets.WEBHOOK_URL }}

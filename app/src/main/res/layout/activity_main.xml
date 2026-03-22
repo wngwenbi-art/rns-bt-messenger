@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Connection Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RNode MAC Address"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/rnodeMacInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="F4:12:73:29:4E:89"
+        android:inputType="text" />
+
+    <Button
+        android:id="@+id/connectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect to RNode" />
+
+    <TextView
+        android:id="@+id/connectionStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Disconnected"
+        android:layout_marginTop="8dp" />
+
+    <!-- Message Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Message"
+        android:textStyle="bold"
+        android:layout_marginTop="24dp" />
+
+    <EditText
+        android:id="@+id/messageInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter text message"
+        android:inputType="textMultiLine"
+        android:maxLines="4" />
+
+    <Button
+        android:id="@+id/sendTextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Text" />
+
+    <Button
+        android:id="@+id/sendImageButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Image" />
+
+    <!-- Progress -->
+    <ProgressBar
+        android:id="@+id/uploadProgress"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
+
+</LinearLayout>

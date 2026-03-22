@@ -1,0 +1,34 @@
+build:
+  maxIssues: 10
+  excludeCorrectable: false
+  weights:
+    complexity: 2
+    formatting: 1
+    style: 1
+    comments: 1
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  LongMethod:
+    threshold: 60
+  LongParameterList:
+    threshold: 6
+  ComplexCondition:
+    threshold: 5
+
+formatting:
+  autoCorrect: true
+  Indentation:
+    active: true
+  NoWildcardImports:
+    active: true
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  UnusedImports:
+    active: true

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- RNS Network Icon -->
+    <group android:scaleX="2"
+        android:scaleY="2"
+        android:translateX="27"
+        android:translateY="27">
+        
+        <!-- Central node -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M27,27m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+        
+        <!-- Connection lines -->
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:pathData="M27,19L27,5M27,35L27,49M19,27L5,27M35,27L49,27"/>
+        
+        <!-- Outer nodes -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M27,5m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M27,49m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M5,27m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M49,27m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+    </group>
+</vector>
