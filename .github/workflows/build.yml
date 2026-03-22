@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  JAVA_VERSION: '17'  # Changed from 21 to 17 (more stable for Android)
+  JAVA_VERSION: '17'
   GRADLE_VERSION: '8.2'
 
 jobs:
@@ -30,21 +30,15 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       
+      # ✅ Gradle Action provides Gradle directly - no wrapper needed!
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
-          cache-disabled: false
       
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
-      
-      # Skip androidDependencies - it's deprecated and causes issues
-      # - name: Download Dependencies
-      #   run: ./gradlew androidDependencies
-      
+      # ✅ Use 'gradle' command directly, NOT './gradlew'
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: gradle assembleDebug --stacktrace --no-daemon
       
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
