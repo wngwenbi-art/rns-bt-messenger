@@ -1,3 +1,4 @@
+﻿import com.example.rnsbtmessenger.stubs.*
 package com.example.rnsbtmessenger
 
 import android.app.Notification
@@ -11,13 +12,13 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
-import network.reticulum.Reticulum
-import network.reticulum.common.DestinationDirection
-import network.reticulum.common.DestinationType
-import network.reticulum.destination.Destination
-import network.reticulum.identity.Identity
-import network.reticulum.link.Link
-import network.reticulum.resource.Resource
+
+
+
+
+
+
+
 import java.io.File
 
 /**

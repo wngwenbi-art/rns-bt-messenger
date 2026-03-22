@@ -1,3 +1,4 @@
+﻿import java.io.ByteArrayOutputStream
 package com.example.rnsbtmessenger
 
 import android.bluetooth.BluetoothAdapter
@@ -5,7 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.util.Log
 import kotlinx.coroutines.*
-import network.reticulum.interfaces.RnsInterface
+import com.example.rnsbtmessenger.stubs.RnsInterface
 import java.io.IOException
 import java.util.UUID
 
